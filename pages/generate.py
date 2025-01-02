@@ -1,50 +1,60 @@
-import json
 import streamlit as st
-from streamlit_lottie import st_lottie
+import ollama
 from sidebar.nav import Navbar
+import json
+from streamlit_lottie import st_lottie
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    layout="wide"
+)
 
-# Fonction pour charger un fichier JSON local
+# Fonction pour charger une animation Lottie locale
 def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
-# Charger l'animation Lottie en local
-lottie_text_generation = load_lottiefile("animation/generate.json")
 
-if 'generating' not in st.session_state:
-    st.session_state.generating = False
-
-def stop_generation():
-    st.session_state.generating = False
+# Charger l'animation Lottie
+lottie_similarity = load_lottiefile("animation/generate.json")
 
 def main():
     Navbar()
+    # Titre de l'application
     st.title("Générateur de texte avec LLaMA 3.1")
 
+    # Titre personnalisé dans la barre latérale
     st.sidebar.header("Text Generation")
+
+    # Afficher l'animation Lottie sous le titre
     with st.sidebar:
-        if lottie_text_generation:
-            st_lottie(lottie_text_generation, speed=1, width=300, height=200, key="text-gen-lottie")
-        else:
-            st.error("Impossible de charger l'animation.")
+        st_lottie(lottie_similarity, speed=1, width=250, height=200, key="generate-lottie")
 
-    # Champ texte et bouton génération
+    # Champ de texte pour l'entrée utilisateur
     prompt = st.text_area("Entrez votre texte ici :", height=150)
-    col1, col2 = st.columns([1, 1])
 
-    with col1:
-        if not st.session_state.generating and st.button("Générer"):
-            if prompt:
-                st.session_state.generating = True
-            else:
-                st.warning("Veuillez entrer un texte avant de générer.")
+    # Bouton de génération
+    if st.button("Générer"):
+        if prompt:
+            with st.spinner("Génération en cours..."):
+                try:
+                    # Utiliser un générateur pour la génération en flux
+                    response = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': prompt}],
+                                           stream=True)
 
-    if st.session_state.generating:
-        with col2:
-            if st.button("❌ Arrêter"):
-                stop_generation()
+                    # Fonction de flux pour affichage en temps réel
+                    def stream_text():
+                        for chunk in response:
+                            yield chunk['message']['content']
+
+                    # Affiche le texte au fur et à mesure
+                    st.subheader("Texte généré :")
+                    st.write_stream(stream_text())
+
+                except Exception as e:
+                    st.error(f"Erreur lors de la génération : {e}")
+        else:
+            st.warning("Veuillez entrer un texte avant de générer.")
+
 
 if __name__ == '__main__':
     main()
