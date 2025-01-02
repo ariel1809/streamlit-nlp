@@ -43,7 +43,7 @@ def main():
 
     if st.session_state.generating:
         with col2:
-            if st.button("Arrêter"):
+            if st.button("❌ Arrêter"):
                 stop_generation()
 
 if __name__ == '__main__':
