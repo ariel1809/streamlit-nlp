@@ -3,11 +3,13 @@ import ollama
 from sidebar.nav import Navbar
 import json
 from streamlit_lottie import st_lottie
+import os
 
 st.set_page_config(
     page_title="Text Generation",
     layout="wide"
 )
+
 
 # Fonction pour charger une animation Lottie locale
 def load_lottiefile(filepath: str):
@@ -18,43 +20,85 @@ def load_lottiefile(filepath: str):
 # Charger l'animation Lottie
 lottie_similarity = load_lottiefile("animation/generate.json")
 
+# Initialisation de l'état
+if 'generating' not in st.session_state:
+    st.session_state.generating = False
+if 'stop' not in st.session_state:
+    st.session_state.stop = False
+if 'generated_texts' not in st.session_state:
+    st.session_state.generated_texts = []
+if 'selected_text' not in st.session_state:
+    st.session_state.selected_text = ""
+
+
+# Fonction pour stopper la génération
+def stop_generation():
+    st.session_state.stop = True
+    st.session_state.generating = False
+
+
+# Fonction pour sauvegarder le texte dans un fichier
+def save_text_to_file(prompt, text, filename="generated_texts.txt"):
+    with open(filename, "a") as f:
+        f.write(f"Question : {prompt}\nRéponse : {text}\n\n")
+
+
 def main():
     Navbar()
-    # Titre de l'application
     st.title("Générateur de texte avec LLaMA 3.1")
 
-    # Titre personnalisé dans la barre latérale
     st.sidebar.header("Text Generation")
 
-    # Afficher l'animation Lottie sous le titre
     with st.sidebar:
         st_lottie(lottie_similarity, speed=1, width=250, height=200, key="generate-lottie")
 
-    # Champ de texte pour l'entrée utilisateur
     prompt = st.text_area("Entrez votre texte ici :", height=150)
 
-    # Bouton de génération
     if st.button("Générer"):
         if prompt:
-            with st.spinner("Génération en cours..."):
-                try:
-                    # Utiliser un générateur pour la génération en flux
-                    response = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': prompt}],
-                                           stream=True)
+            st.session_state.generating = True
+            st.session_state.stop = False
 
-                    # Fonction de flux pour affichage en temps réel
-                    def stream_text():
-                        for chunk in response:
-                            yield chunk['message']['content']
+    if st.session_state.generating:
+        st.button("Arrêter la génération", on_click=stop_generation)
+        with st.spinner("Génération en cours..."):
+            try:
+                response = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': prompt}],
+                                       stream=True)
 
-                    # Affiche le texte au fur et à mesure
-                    st.subheader("Texte généré :")
-                    st.write_stream(stream_text())
+                def stream_text():
+                    full_text = ""
+                    for chunk in response:
+                        if st.session_state.stop:
+                            break
+                        full_text += chunk['message']['content']
+                        yield chunk['message']['content']
+                    # Sauvegarde du texte généré avec la question
+                    st.session_state.generated_texts.append((prompt, full_text))
+                    save_text_to_file(prompt, full_text)
 
-                except Exception as e:
-                    st.error(f"Erreur lors de la génération : {e}")
-        else:
-            st.warning("Veuillez entrer un texte avant de générer.")
+                st.subheader("Texte généré :")
+                st.write_stream(stream_text())
+            except Exception as e:
+                st.error(f"Erreur lors de la génération : {e}")
+
+            # Réinitialisation après génération
+            st.session_state.generating = False
+
+    if not st.session_state.generating:
+        st.session_state.stop = False
+
+    # Afficher les textes générés précédemment
+    if st.session_state.generated_texts:
+        st.sidebar.subheader("Historique :")
+        for prompt, text in st.session_state.generated_texts:
+            if st.sidebar.button(prompt[:40] + "...", key=prompt):
+                st.session_state.selected_text = f"Question : {prompt}\n\nRéponse : {text}"
+
+    # Affiche le texte sélectionné dans la zone principale
+    if st.session_state.selected_text:
+        st.subheader("Texte sélectionné :")
+        st.text_area("", value=st.session_state.selected_text, height=300)
 
 
 if __name__ == '__main__':
