@@ -1,0 +1,13 @@
+Texte : Bonjour
+Audio : outputs/audio_1.wav
+
+Texte : Générateur de parole avec Bark
+
+Audio : outputs/audio_2.wav
+
+Texte :  L'audio généré sera désormais correctement enregistré dans ce dossier
+Audio : outputs/audio_3.wav
+
+Texte : The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building. Its base is square, measuring 125 metres (410 ft) on each side. During its construction, the Eiffel Tower surpassed the Washington Monument to become the tallest man-made structure in the world.
+Audio : outputs/audio_1.wav
+

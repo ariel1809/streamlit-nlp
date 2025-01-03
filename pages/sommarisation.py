@@ -1,5 +1,6 @@
 import streamlit as st
-import ollama
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import json
 from streamlit_lottie import st_lottie
 from sidebar.nav import Navbar
@@ -18,11 +19,28 @@ def load_lottiefile(filepath: str):
 # Charger l'animation Lottie
 lottie_summary = load_lottiefile("animation/summary.json")
 
+# Charger le modèle BART pour la sommarisation
+tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
+model = AutoModelForSeq2SeqLM.from_pretrained("facebook/bart-large-cnn")
+
+# Fonction pour résumer du texte avec BART
+def summarize_text(text, max_length=130, min_length=30, length_penalty=2.0, num_beams=4):
+    inputs = tokenizer(text, return_tensors="pt", max_length=1024, truncation=True)
+    summary_ids = model.generate(
+        inputs.input_ids,
+        max_length=max_length,
+        min_length=min_length,
+        length_penalty=length_penalty,
+        num_beams=num_beams
+    )
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+
+# Interface principale de l'application Streamlit
 def main():
     Navbar()
 
     # Titre de l'application
-    st.title("🔍 Sommarisation de texte avec LLaMA 3.1")
+    st.title("Sommarisation de texte avec BART")
 
     # Titre personnalisé dans la barre latérale
     st.sidebar.header("Sommarisation de texte")
@@ -35,14 +53,14 @@ def main():
     text_input = st.text_area("Entrez le texte à résumer :", height=150)
 
     # Bouton de sommarisation
-    if st.button("📝 Résumer"):
+    if st.button("Résumer"):
         if text_input:
             with st.spinner("Sommarisation en cours..."):
                 try:
-                    response = ollama.chat(model='llama3.1', messages=[{'role': 'user', 'content': f"Summarize this text: {text_input}"}])
+                    summary = summarize_text(text_input)
                     # Afficher la réponse du modèle
                     st.subheader("Résumé :")
-                    st.write(response['message']['content'])
+                    st.write(summary)
                 except Exception as e:
                     st.error(f"Erreur lors de la sommarisation : {e}")
         else:
