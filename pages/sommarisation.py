@@ -6,6 +6,7 @@ from sidebar.nav import Navbar
 
 # Configuration de la page
 st.set_page_config(
+    page_title="Sommarisation de texte",
     layout="wide"
 )
 

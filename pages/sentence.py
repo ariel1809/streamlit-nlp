@@ -1,14 +1,15 @@
-import streamlit as st
-import ollama
-import torch
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 import json
+import numpy as np
+import ollama
+import streamlit as st
+from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_lottie import st_lottie
+
 from sidebar.nav import Navbar
 
 # Configuration de la page
 st.set_page_config(
+    page_title="Sentence Similarity",
     layout="wide"
 )
 
