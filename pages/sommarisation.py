@@ -25,7 +25,7 @@ def main():
     st.title("🔍 Sommarisation de texte avec LLaMA 3.1")
 
     # Titre personnalisé dans la barre latérale
-    st.sidebar.header("🔍 Sommarisation")
+    st.sidebar.header("Sommarisation de texte")
 
     # Afficher l'animation Lottie sous le titre dans la barre latérale
     with st.sidebar:
