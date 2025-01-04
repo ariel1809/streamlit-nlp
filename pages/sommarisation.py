@@ -1,8 +1,8 @@
-import streamlit as st
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import json
+import streamlit as st
 from streamlit_lottie import st_lottie
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 from sidebar.nav import Navbar
 
 # Configuration de la page

@@ -1,9 +1,8 @@
-import streamlit as st
-import ollama
-from sidebar.nav import Navbar
 import json
+import ollama
+import streamlit as st
 from streamlit_lottie import st_lottie
-import os
+from sidebar.nav import Navbar
 
 st.set_page_config(
     page_title="Text Generation",

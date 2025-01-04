@@ -1,11 +1,10 @@
 import json
-import numpy as np
 import streamlit as st
-from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
 from sklearn.metrics.pairwise import cosine_similarity
 from streamlit_lottie import st_lottie
+from transformers import AutoTokenizer, AutoModel
 
 from sidebar.nav import Navbar
 
