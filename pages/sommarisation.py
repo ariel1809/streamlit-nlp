@@ -1,7 +1,7 @@
 import json
+import requests
 import streamlit as st
 from streamlit_lottie import st_lottie
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 from sidebar.nav import Navbar
 
@@ -19,21 +19,24 @@ def load_lottiefile(filepath: str):
 # Charger l'animation Lottie
 lottie_summary = load_lottiefile("animation/summary.json")
 
-# Charger le modèle BART pour la sommarisation
-tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
-model = AutoModelForSeq2SeqLM.from_pretrained("facebook/bart-large-cnn")
+# Configuration de l'API Hugging Face pour la sommarisation
+API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+HEADERS = {
+    "Authorization": "Bearer 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"
+}
 
-# Fonction pour résumer du texte avec BART
-def summarize_text(text, max_length=130, min_length=30, length_penalty=2.0, num_beams=4):
-    inputs = tokenizer(text, return_tensors="pt", max_length=1024, truncation=True)
-    summary_ids = model.generate(
-        inputs.input_ids,
-        max_length=max_length,
-        min_length=min_length,
-        length_penalty=length_penalty,
-        num_beams=num_beams
-    )
-    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+# Fonction pour envoyer une requête à l'API Hugging Face pour la sommarisation
+def query(payload):
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=payload)
+        response.raise_for_status()  # Lève une exception si la requête échoue
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Erreur de requête : {e}")
+        return None
+    except json.JSONDecodeError:
+        st.error("Erreur lors du décodage JSON de la réponse de l'API.")
+        return None
 
 # Interface principale de l'application Streamlit
 def main():
@@ -57,10 +60,17 @@ def main():
         if text_input:
             with st.spinner("Sommarisation en cours..."):
                 try:
-                    summary = summarize_text(text_input)
-                    # Afficher la réponse du modèle
-                    st.subheader("Résumé :")
-                    st.write(summary)
+                    # Préparer les données pour l'API
+                    payload = {"inputs": text_input}
+                    response = query(payload)
+
+                    # Vérifier si la réponse contient le résumé
+                    if response and isinstance(response, list) and len(response) > 0 and 'summary_text' in response[0]:
+                        summary = response[0]['summary_text']
+                        st.subheader("Résumé :")
+                        st.write(summary)
+                    else:
+                        st.error("Réponse invalide de l'API. Aucune sommarisation disponible.")
                 except Exception as e:
                     st.error(f"Erreur lors de la sommarisation : {e}")
         else:

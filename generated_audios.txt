@@ -17,3 +17,6 @@ Audio : outputs/audio_1.wav
 Texte : Bonjour ariel
 Audio : outputs/audio_1.wav
 
+Texte : Générateur de parole avec Bark
+Audio : outputs/audio_1.wav
+
