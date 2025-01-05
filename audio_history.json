@@ -1,0 +1,10 @@
+[
+    {
+        "text": "azerty",
+        "path": "outputs/audio_1.wav"
+    },
+    {
+        "text": "G\u00e9n\u00e9rateur de parole avec BAYASHI",
+        "path": "outputs/audio_2.wav"
+    }
+]

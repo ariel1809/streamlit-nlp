@@ -9,8 +9,6 @@ st.set_page_config(
     layout="wide"
 )
 
-
-# Fonction pour charger une animation Lottie locale
 def load_lottiefile(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
@@ -19,27 +17,36 @@ def load_lottiefile(filepath: str):
 # Charger l'animation Lottie
 lottie_similarity = load_lottiefile("animation/generate.json")
 
+
+def save_history_to_file(history, filename="history.json"):
+    with open(filename, "w") as f:
+        json.dump(history, f)
+
+
+def load_history_from_file(filename="history.json"):
+    try:
+        with open(filename, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        return []
+
+
 # Initialisation de l'état
 if 'generating' not in st.session_state:
     st.session_state.generating = False
 if 'stop' not in st.session_state:
     st.session_state.stop = False
 if 'generated_texts' not in st.session_state:
-    st.session_state.generated_texts = []
+    st.session_state.generated_texts = load_history_from_file()
 if 'selected_text' not in st.session_state:
     st.session_state.selected_text = ""
 
 
-# Fonction pour stopper la génération
 def stop_generation():
     st.session_state.stop = True
     st.session_state.generating = False
-
-
-# Fonction pour sauvegarder le texte dans un fichier
-def save_text_to_file(prompt, text, filename="generated_texts.txt"):
-    with open(filename, "a") as f:
-        f.write(f"Question : {prompt}\nRéponse : {text}\n\n")
 
 
 def main():
@@ -74,14 +81,13 @@ def main():
                         yield chunk['message']['content']
                     # Sauvegarde du texte généré avec la question
                     st.session_state.generated_texts.append((prompt, full_text))
-                    save_text_to_file(prompt, full_text)
+                    save_history_to_file(st.session_state.generated_texts)
 
                 st.subheader("Texte généré :")
                 st.write_stream(stream_text())
             except Exception as e:
                 st.error(f"Erreur lors de la génération : {e}")
 
-            # Réinitialisation après génération
             st.session_state.generating = False
 
     if not st.session_state.generating:
@@ -94,7 +100,6 @@ def main():
             if st.sidebar.button(prompt[:40] + "...", key=prompt):
                 st.session_state.selected_text = f"Question : {prompt}\n\nRéponse : {text}"
 
-    # Affiche le texte sélectionné dans la zone principale
     if st.session_state.selected_text:
         st.subheader("Texte sélectionné :")
         st.text_area("", value=st.session_state.selected_text, height=300)
